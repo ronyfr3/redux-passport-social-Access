@@ -7,7 +7,11 @@ const passport = require("passport");
 // this url->localhost:3000/auth/google comes here it goes controllers/passport.js here and
 // authenticate users with passport-google strategy
 //passport authenticate user and give us ["profile"] obj which holds user info.
-router.get("/google", passport.authenticate("google", { scope: ["profile"] }));
+//{ scope: ["profile"] }-->means i want to access user profile and email;
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
 //after login it redirect to auth/google/redirect
 //we need to create this page when it redirects
@@ -22,25 +26,29 @@ router.get("/google", passport.authenticate("google", { scope: ["profile"] }));
 //   });
 // }
 //then give us user info
-router.get("/google/redirect", passport.authenticate("google"), (req, res) => {
-  //after logged in we get user from req obj  req.user
-  res.redirect("/");
-});
-
-//Facebook
 router.get(
-  "/facebook",
-  passport.authenticate("facebook", { scope: ["user_friends", "manage_pages"] })
-);
-router.get(
-  "/facebook/redirect",
-  passport.authenticate("facebook", { failureRedirect: "/login" }),
+  "/google/redirect",
+  passport.authenticate("google", { scope: ["profile", "email"] }),
   (req, res) => {
     //after logged in we get user from req obj  req.user
     res.redirect("/");
+    // res.send(req.user.username);
   }
 );
-//log out
+
+//Facebook
+router.get("/facebook", passport.authenticate("facebook"));
+router.get(
+  "/facebook/redirect",
+  passport.authenticate("facebook", {
+    failureRedirect: "/login",
+    successRedirect: "/",
+  })
+);
+
+router.get("/profile", (req, res) => {
+  res.send(req.user);
+});
 router.get("/logout", (req, res) => {
   req.logout();
   res.redirect("/");

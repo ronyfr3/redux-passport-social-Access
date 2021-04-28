@@ -1,3 +1,4 @@
+require("dotenv").config();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20");
 const FacebookStrategy = require("passport-facebook");
@@ -21,33 +22,36 @@ passport.deserializeUser((id, done) => {
 
 //GOOGLE LOGIN
 // The strategy also requires a verify callback, which receives the access token and optional refresh token, as well as profile which contains the authenticated user's Google profile. The verify callback must call cb providing a user to complete authentication.
+
+//GOOGLE LOGIN
 passport.use(
   new GoogleStrategy(
     {
-      clientID:
-        "646502856565-gfg0igdr52jsncmi957od5oqu133psc3.apps.googleusercontent.com",
-      clientSecret: "8m5Gs5aG8xkgOhPdyWLbdQT2",
+      clientID: process.env.GOOGLE_CLIENTID,
+      clientSecret: process.env.GOOGLE_CLIENTSECRET,
       //this comes from google dev console credentials->http://localhost:3000/auth/google/redirect
       callbackURL: "/auth/google/redirect",
+      proxy: true,
     },
     //passport varify callback function
-    (accessToken, refreshToken, profile, cb) => {
+    (accessToken, refreshToken, profile, done) => {
       // console.log(profile);
       //profile(json obj)->name,photo,id
       //check user already exist
       LoginUser.findOne({
-        googleId: profile.id,
+        userId: profile.id,
       }).then((existUser) => {
         if (existUser) {
           //exsists already
-          console.log("existUser", existUser);
+          // console.log("existUser", existUser);
           //if user exist it will go in serialize
           done(null, existUser);
         } else {
           //save newUser to db
           new LoginUser({
             username: profile.displayName,
-            googleId: profile.id,
+            userId: profile.id,
+            picture: profile._json.picture,
           })
             .save()
             .then((newUser) => {
@@ -65,28 +69,31 @@ passport.use(
 passport.use(
   new FacebookStrategy(
     {
-      clientID: "1535006533557168",
-      clientSecret: "3a4a7b38c4691ba17cb167004281a3cb",
+      clientID: process.env.FACEBOOK_CLIENTID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
       callbackURL: "/auth/facebook/redirect",
+      proxy: true,
     },
-    function (accessToken, refreshToken, profile, cb) {
+    function (accessToken, refreshToken, profile, done) {
+      // console.log(profile)
       LoginUser.findOne({
-        facebookId: profile.id,
+        userId: profile.id,
       }).then((existUser) => {
         if (existUser) {
           //exsists already
-          console.log("existUser", existUser);
+          // console.log("existUser", existUser);
           //if user exist it will go in serialize
           done(null, existUser);
         } else {
           //save newUser to db
           new LoginUser({
             username: profile.displayName,
-            facebookId: profile.id,
+            userId: profile.id,
+            picture: profile._json.picture,
           })
             .save()
             .then((newUser) => {
-              console.log("new user", newUser);
+              // console.log("new user", newUser);
               //new user will go in serialize
               done(null, newUser);
             });
